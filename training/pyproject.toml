@@ -1,0 +1,34 @@
+[project]
+name = "arbitro-train"
+version = "0.0.1"
+description = "Arbitro trainer: packed ModernBERT decision models and M0 GPU spikes (PyTorch)."
+license = "Apache-2.0"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "torch==2.14.*",
+    "transformers==5.17.*",
+    "tokenizers==0.23.2",
+    "safetensors>=0.6",
+    "huggingface_hub>=1.0",
+    "numpy>=2.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["arbitro_train"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 140
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]
+ignore = ["E501", "B905", "B023"]

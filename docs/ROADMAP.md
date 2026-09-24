@@ -5,7 +5,7 @@
 | Status | Design baseline, 2026-09-23. Nothing is implemented and nothing is MEASURED yet. |
 | Normative sources | ADR-032 (roadmap and capacity plan), ADR-033 (risk register and cut policy) and ADR-026 (GPU operations and compute budget) in the decision record [DECISIONS.md](DECISIONS.md), split into `docs/adr/` in M0. Where this document and an ADR disagree, the ADR wins. |
 | Capacity assumption | One maintainer at about 12 h/week (Q7). One RTX 4090 24 GB serves as development machine, CI runner, trainer and labeller. |
-| Name | "Arbitro" is the working name (Q1). The repository stays `Foxur/Rustify`. |
+| Name | **Arbitro** (decided 2026-09-24, Q1). The repository stays `Foxur/Rustify` for now. |
 | Re-baselined | After the M0 measurements (week 2) and at every milestone exit. |
 
 This document turns the decision record into a schedule: what gets built in which order, what must be true before a milestone counts as done, what it costs in maintainer hours and 4090 hours, what can go wrong, and which decisions the maintainer owes the plan. Architecture and rationale are in [ARCHITECTURE.md](ARCHITECTURE.md) and the ADRs, and the evidence about Jev and Laya behind them is in [ANALYSIS.md](ANALYSIS.md); they are not repeated here.
@@ -85,7 +85,7 @@ This document turns the decision record into a schedule: what gets built in whic
 
 | Milestone | Dev-h | Cum. | ≈ Weeks | GPU-h | Exit gate | Release |
 |---|---|---|---|---|---|---|
-| **M0** Foundations & measurement | 24 | 24 | 1–2 | 4–6 | Four spike reports; C1 measured; L0 `pycompat` green; L1 ≥ 1k items; Q1, Q2, Q6, Q7 answered or defaulted | — |
+| **M0** Foundations & measurement | 24 | 24 | 1–2 | 4–6 | Four spike reports; C1 measured; L0 `pycompat` green; L1 ≥ 1k items; Q6, Q7 answered or defaulted | — |
 | **M1** Compat core + CPU runtime | 56 | 80 | 3–7 | in line #1 of ADR-026 | L0–L3 green for all three checkpoints on `cpu` fp32 | — |
 | **E1** Early model signal (interleaved) | 18 | 98 | 5–11 | 10–15 | ADR-020a signal recorded | — |
 | **M2** v0.1 "drop-in" | 60 | 158 | 8–14 | in line #8 | v0.1 definition of done | **v0.1 (~week 14)** |
@@ -146,9 +146,11 @@ Each milestone lists its goal, deliverables, exit gate, effort, the decisions it
 - Four spike reports committed under `reports/spikes/`.
 - C1 measured. If ModernBERT-large trains at < 20k tok/s, the GPU budget is scaled linearly and the plan is re-baselined before M3a (ADR-026).
 - L0 `pycompat` green; L1 ≥ 1k items identical.
-- Q1, Q2, Q6, Q7 answered or defaulted.
+- Q6, Q7 answered or defaulted (Q1 and Q2 were answered on 2026-09-24).
 
 **Effort.** 24 dev-h; 4–6 GPU-h (line #1). Task breakdown in [§6](#6-the-first-two-weeks-task-by-task).
+
+**Status (2026-09-24).** The GPU-side tooling for W1.2, W1.3, W1.4 and N1 is in the repository and CPU-tested: `training/` (packed ModernBERT, self-test, `bench/env|gemm|train_throughput`, `m0_gpu.sh`) and `tools/goldens/` (`fetch_checkpoints.py`, `laya_baseline.py`, `registry.toml`, uv lockfiles). Runbook: [training/README.md](../training/README.md). The reference environment installs laya from git at `010bacef`, because 0.3.7 is no longer on PyPI (AM-17).
 
 **Risks.** R8 (modelled 4090 numbers wrong) gets its first answer here: trainer throughput (C1), the PyTorch baseline and the GEMM/FA2 probes are measured, but the engine numbers (P1–P4) can only be measured in M4. R15 (CPU speed) gets its first signal from the CPU spike.
 
@@ -212,7 +214,7 @@ Also verified in M2, from the ADR validation gates: at concurrency 1, HTTP p50 w
 
 **Effort.** 60 dev-h (cumulative 158), weeks 8–14; GPU time in line #8.
 
-**Decisions needed.** Q1 at the latest before the first publish (no `cargo publish` until answered and a trademark search is recorded); Q5 (platform tiers); Q9 (image registry); Q16 (CUTLASS fetch in the `-cuda` build), Q17 (the fp32 path behind T5 in item 4) and Q18 (the admission rule behind P12), all in [§10](#10-open-questions-for-the-maintainer).
+**Decisions needed.** A recorded trademark search for "Arbitro" before the first publish (Q1 itself is answered); Q5 (platform tiers); Q9 (image registry); Q16 (CUTLASS fetch in the `-cuda` build), Q17 (the fp32 path behind T5 in item 4) and Q18 (the admission rule behind P12), all in [§10](#10-open-questions-for-the-maintainer).
 
 **Risks.** R1, R10 (Jev contract drift, caught by the pinned conformance suite), R20 (CUDA build and distribution).
 
@@ -376,7 +378,7 @@ M0 is 24 dev-h: 12 in week 1, 12 in week 2 (ADR-032). Task IDs are local to this
 
 **Order.** W1.2 unblocks W1.4, N1, W2.4 and N2. W2.1 comes before W2.2, because `build_sequence` tokenises Python-serialised JSON. W1.3 and W2.3 are independent.
 
-**Decisions due in M0, no dev-h budgeted:** Q1 (name), Q2 (licence), Q6 (hardware and runner), Q7 (time budget). The M0 exit review (`reports/milestones.md`) closes week 2; ADR-032 gives it no separate budget.
+**Decisions due in M0, no dev-h budgeted:** Q6 (hardware and runner), Q7 (time budget). The M0 exit review (`reports/milestones.md`) closes week 2; ADR-032 gives it no separate budget.
 
 ---
 
@@ -443,7 +445,7 @@ From ADR-033; reviewed at every milestone exit. L / I = likelihood / impact.
 | R8 | The modelled 4090 numbers are wrong | M / M | M0 spikes; gates re-based and recorded | M0 |
 | R9 | FP8 per-token / per-channel scaling unavailable in cuBLASLt on Ada | H / L | CUTLASS sm89 is the plan, not a fallback; FP8 is post-1.0 anyway | M0 probe |
 | R10 | Jev contract drift (young SDKs, no changelog) | M / L | Pinned SDK conformance + Renovate | A red conformance test |
-| R11 | Laya reference or Hub drift | M / L | Pins + sha256; compat targets 0.3.7; weekly regeneration | Nightly L3 |
+| R11 | Laya reference or Hub drift | H / L | Pins + sha256; compat targets 0.3.7, installed from git by commit (0.3.7 left PyPI on 2026-09-24, AM-17); weekly regeneration | Nightly L3 |
 | R12 | One 4090 is dev machine, CI runner and trainer at once | H / M | The GPU-night schedule; CPU CI covers PRs | Queue conflicts |
 | R13 | Calibration does not transfer out of distribution | M / M | Feature-conditioned T, correctness head, conformal; the OOD-S dev gate | G-Q3 on dev |
 | R14 | Option budgets overflow (255 options × spans) | M / M | Option-group chunking + random chunking in training; the chunk-invariance gate | X6 |
@@ -462,8 +464,8 @@ Each question has a default; the project proceeds on the default until the maint
 
 | # | Question | Default if unanswered | Needed by |
 |---|---|---|---|
-| Q1 | **Name:** "Arbitro" (free on crates.io, PyPI and npm, re-checked 2026-09-23; trademark search UNVERIFIED), "Rustify" (crates `rustify-*`, facade `rustify-decide`, because `rustify` is an unrelated 12.4M-download HTTP client), or another? | Arbitro; no `cargo publish` until answered | M0 exit; at the latest before the first publish (M2) |
-| Q2 | **Licence:** Apache-2.0 only, or MIT OR Apache-2.0? | Apache-2.0 only (vendored and derived code is Apache-only) | M0 |
+| Q1 | **ANSWERED 2026-09-24: Arbitro.** **Name:** "Arbitro" (free on crates.io, PyPI and npm, re-checked 2026-09-23; trademark search UNVERIFIED), "Rustify" (crates `rustify-*`, facade `rustify-decide`, because `rustify` is an unrelated 12.4M-download HTTP client), or another? | Arbitro; no `cargo publish` until answered | M0 exit; at the latest before the first publish (M2) |
+| Q2 | **ANSWERED 2026-09-24: Apache-2.0 only.** **Licence:** Apache-2.0 only, or MIT OR Apache-2.0? | Apache-2.0 only (vendored and derived code is Apache-only) | M0 |
 | Q3 | **typed-decisions:** may `LocalLLaMA/typed-decisions` be used privately, never published, to reproduce Laya's fine-tune (P1) from Laya weights you downloaded? Its licence and teacher are unknown. | No; licence-clean trainer validation instead | M3b (week ~31) |
 | Q4 | **Share-alike data:** may CC-BY-SA or CDLA-Sharing sources (SNLI, BoolQ, ARC, FEVER, SGD, SIB-200, Belebele, Civil Comments text) train Apache-2.0 weights? | Exclude from training; usable for evaluation | M3a (week ~15) |
 | Q5 | **Platforms:** which tiers? | Tier-1 Linux x86_64 CPU + NVIDIA CUDA; Tier-2 macOS arm64 (CPU/Metal), Linux aarch64 CPU; Tier-3 Windows x64 CPU (build-only) | M2 |

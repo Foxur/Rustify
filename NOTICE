@@ -1,0 +1,27 @@
+Arbitro
+Copyright 2026 The Arbitro Authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Arbitro is not affiliated with or endorsed by TypeSafe AI or Convai
+Innovations. "Jev", "TypeSafe", "System One" and "Laya" are names or
+trademarks of their respective owners and are used here only to describe
+compatibility.
+
+Third-party material
+--------------------
+No third-party source code is vendored yet. When code is copied or ported,
+it is listed here with its origin and licence, and file-level provenance is
+recorded in third_party/README.md (see docs/DECISIONS.md, ADR-030).
+
+Planned entries:
+- Behavioural port of Laya (NandhaKishorM/laya @ 010bacef),
+  Copyright Convai Innovations, Apache License 2.0.
+- FlashAttention-2 kernels (BSD-3-Clause, Tri Dao) and CUTLASS
+  (BSD-3-Clause, NVIDIA), once vendored into arbitro-cuda.
+
+Model weights
+-------------
+Laya checkpoints are never included in this repository, its images or its
+release assets. They are downloaded by the user from their original
+repositories, and their licence terms apply to the user.

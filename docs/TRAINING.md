@@ -7,7 +7,7 @@
 | Hardware | One RTX 4090 24 GB. It is also the development machine, the nightly CI runner and the teacher labeller (ADR-026). |
 | Normative sources | ADR-019 … ADR-027 and ADR-030 … ADR-033 in the decision record [DECISIONS.md](DECISIONS.md), split into `docs/adr/` in M0. Where this document and an ADR disagree, the ADR wins. |
 | Companion documents | [`ARCHITECTURE.md`](ARCHITECTURE.md) (engine, serving-side dm2 layouts in §7.7, calibration application in §12, parity in §15), [`ANALYSIS.md`](ANALYSIS.md) (Laya's model, training recipe and failure modes, and the Jev evidence that dm2 answers), `docs/ablations.md` (pre-registrations), `docs/clean-room.md` |
-| Name | "Arbitro" is the working name (Q1). The repository stays `Foxur/Rustify`. |
+| Name | **Arbitro** (decided 2026-09-24, Q1). The repository stays `Foxur/Rustify` for now. |
 
 This document is the model and training plan. It covers:
 - what dm2 changes relative to Laya's laya-v1 family, and which changes must first win an ablation;

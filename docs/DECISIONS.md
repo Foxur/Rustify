@@ -33,7 +33,7 @@ Date: 2026-09-23. Author: lead architect. Audience: the solo maintainer (one RTX
 
 ## 1. Executive summary
 
-**What we build.** A self-hosted, Apache-2.0 typed-decision engine written in Rust. The working name is **Arbitro**; the GitHub repo stays `Foxur/Rustify` until the maintainer decides on the name (Q1). The engine:
+**What we build.** A self-hosted, Apache-2.0 typed-decision engine written in Rust. The name is **Arbitro** (Q1, decided 2026-09-24); the GitHub repo stays `Foxur/Rustify` for now (Q1). The engine:
 - speaks the Jev wire format (`POST /v1/systemone`, `GET /v1/models`), so the unmodified TypeSafe SDKs work with only `TYPESAFE_BASE_URL` changed;
 - runs user-downloaded Laya checkpoints with verified numerical parity;
 - later serves our own licence-clean models (the **dm2** family) trained on the RTX 4090.
@@ -95,7 +95,7 @@ Multilingual weights (pending counsel on the tokenizer) and FP8 come after 1.0.
 3. dm2 not clearly beating Laya.
 4. The custom engine overrunning. candle-CUDA stays shippable meanwhile.
 
-**Needed from the maintainer now:** Q1 name, Q3 typed-decisions reproduction, Q4 CC-BY-SA data, Q5 platforms, Q6 hardware and runner, Q7 time budget. Before M2: Q16 (CUTLASS fetch in the `candle-cuda` build), Q17 (fp32 GPU path for T5/T9), Q18 (admission vs backpressure). Before the first public announcement: Q15 (publishing the research reports). By v0.1: Q14, the order of engine vs model (§2).
+**Needed from the maintainer now:** Q3 typed-decisions reproduction, Q4 CC-BY-SA data, Q5 platforms, Q6 hardware and runner, Q7 time budget. Before M2: Q16 (CUTLASS fetch in the `candle-cuda` build), Q17 (fp32 GPU path for T5/T9), Q18 (admission vs backpressure). Before the first public announcement: Q15 (publishing the research reports). By v0.1: Q14, the order of engine vs model (§2).
 
 ---
 
@@ -105,8 +105,8 @@ Each question has a default. The project proceeds on the default until the maint
 
 | # | Question | Recommendation / default if unanswered | Needed by | ADR |
 |---|---|---|---|---|
-| Q1 | **Name.** Options: (a) "Arbitro": free on crates.io, PyPI and npm, re-checked 2026-09-23; trademark search UNVERIFIED. (b) "Rustify": the crate `rustify` is an unrelated HTTP client with 12.4M downloads, so our crates would be `rustify-*` and the facade would be `rustify-decide`. (c) Another name. | Arbitro. No `cargo publish` until answered. | M0 exit (week 2); at the latest before the first publish (M2) | ADR-002 |
-| Q2 | **Licence.** Apache-2.0 only, or MIT OR Apache-2.0? | Apache-2.0 only, because we vendor or derive Apache-only code | M0 | ADR-030 |
+| Q1 | **ANSWERED 2026-09-24: Arbitro.** **Name.** Options: (a) "Arbitro": free on crates.io, PyPI and npm, re-checked 2026-09-23; trademark search UNVERIFIED. (b) "Rustify": the crate `rustify` is an unrelated HTTP client with 12.4M downloads, so our crates would be `rustify-*` and the facade would be `rustify-decide`. (c) Another name. | Arbitro. No `cargo publish` until answered. | M0 exit (week 2); at the latest before the first publish (M2) | ADR-002 |
+| Q2 | **ANSWERED 2026-09-24: Apache-2.0 only.** **Licence.** Apache-2.0 only, or MIT OR Apache-2.0? | Apache-2.0 only, because we vendor or derive Apache-only code | M0 | ADR-030 |
 | Q3 | **typed-decisions.** May `LocalLLaMA/typed-decisions` be used privately, never published, to reproduce Laya's fine-tune ("P1") from Laya weights you downloaded? Its licence and teacher are unknown [CR G14]. | **No.** Validate the trainer with a licence-clean reproduction instead (ADR-023). | M3b (week ~31) | ADR-023, ADR-024 |
 | Q4 | **Share-alike data.** May CC-BY-SA or CDLA-Sharing sources train Apache-2.0 weights? Examples: SNLI, BoolQ, ARC, FEVER, SGD, SIB-200, Belebele, Civil Comments text. | **Exclude** them from training. They stay usable for evaluation. | M3a (week ~15) | ADR-024 |
 | Q5 | **Platforms.** Which tiers? | Tier-1: Linux x86_64 CPU and NVIDIA CUDA. Tier-2: macOS arm64 (CPU/Metal) and Linux aarch64 CPU. Tier-3: Windows x64 CPU (build-only). | M2 | ADR-006, ADR-029 |
@@ -132,9 +132,9 @@ Each question has a default. The project proceeds on the default until the maint
 
 | Thing | Canonical name | Notes |
 |---|---|---|
-| Product (display) | **Arbitro** | Working name, pending Q1. |
+| Product (display) | **Arbitro** | Decided 2026-09-24 (Q1). |
 | Lower-case token | `arbitro` | The root of every identifier below. |
-| Repository | `github.com/Foxur/Rustify` | Unchanged until Q1. "Rustify" is only the repo's codename: never a crate, binary or model name unless Q1 chooses it. |
+| Repository | `github.com/Foxur/Rustify` | Unchanged for now; a later rename to `arbitro` is optional (GitHub redirects). "Rustify" is only the repo's codename: never a crate, binary or model name. |
 | Published crates (8) | `arbitro-proto`, `arbitro-core`, `arbitro-compat`, `arbitro-candle`, `arbitro-cuda`, `arbitro-server`, `arbitro-eval`, `arbitro` | ADR-003. Versions are lockstep. |
 | Internal crates (`publish = false`) | `arbitro-data`, `arbitro-py`, `xtask` | `arbitro-py` builds the PyPI wheel `arbitro`. |
 | Reserved crate | `arbitro-ort` | Created only if ADR-007's CPU spike fails. |
@@ -462,7 +462,7 @@ The names, glossary and numbers in §3–§5 already reflect these resolutions.
 | D7 | Training data vs the Jev-comparable suites | Accuracy's exclusion list plus three disjoint pools. MASSIVE becomes eval-only, which fixes accuracy's own train/held-out contradiction. | ADR-024 |
 | D8 | P1 typed-decisions reproduction: run by default (perf, product) vs gated (accuracy) | The maintainer's opt-in (Q3). Default: licence-clean trainer validation. | ADR-023 |
 | D9 | Deadline and overload codes | 8 s deadline; 503 (529 in `strict`) for overload and deadline; 429 only per key | ADR-017 |
-| D10 | Naming: `tydec-*`, `rustify-*`, Arbitro | Arbitro as the working name (Q1). Modes and methods carry no third-party marks. | ADR-002, ADR-031 |
+| D10 | Naming: `tydec-*`, `rustify-*`, Arbitro | Arbitro (working name, confirmed by the maintainer on 2026-09-24, Q1). Modes and methods carry no third-party marks. | ADR-002, ADR-031 |
 | D11 | Crate count: 14, 18, or 8 published + 3 internal | 8 published + 3 internal; the other proposals' boundaries become modules | ADR-003 |
 | D12 | Router, email and presets in v0.1 (perf, accuracy) vs deferred (product) | v0.1 routing is `explicit`. The laya-heuristic router lands in v0.2. Email, presets and shortlist are community work, self-checked by L0 fixtures. | ADR-012 |
 | D13 | Score confidence: peak (critic, empirical) vs the documented formula (JAS §9.4 #7) | `peak` by default in `strict` and `lenient`, configurable; documented as a deliberate choice | ADR-016 |
@@ -554,7 +554,7 @@ Downstream `docs/adr/ADR-NNN-<slug>.md` files are split from this section verbat
 
 ### ADR-002: Project and package naming
 
-**Status:** Proposed-needs-user-input (Q1). The working name is binding for all documents until the maintainer answers. **Area:** A2.
+**Status:** Accepted 2026-09-24 (Q1 answered: Arbitro). The trademark search is still to be recorded before the first `cargo publish`. **Area:** A2.
 
 **Context.**
 - `rustify` on crates.io is an unrelated HTTP-client crate (0.7.0, about 12.4M downloads), and `rustify-cli` is taken. npm `rustify` is taken; PyPI `rustify` is free.
@@ -563,8 +563,8 @@ Downstream `docs/adr/ADR-NNN-<slug>.md` files are split from this section verbat
 - `laya` and `laya-rs` are taken (prior art).
 
 **Decision.**
-- The working name is **Arbitro**. §3 lists every identifier derived from it, plus the rename rule.
-- No `cargo publish` happens before Q1 is answered and a trademark search (UNVERIFIED so far) is recorded in `docs/adr/`.
+- The name is **Arbitro** (maintainer decision, 2026-09-24). §3 lists every identifier derived from it; the rename rule stays as a contingency if the trademark search fails.
+- No `cargo publish` happens before a trademark search (UNVERIFIED so far) is recorded in `docs/adr/`.
 - Names are claimed only by publishing a real 0.0.1 of `arbitro-proto`, because crates.io forbids squatting.
 - The repo stays `Foxur/Rustify`; GitHub redirects after a rename.
 - No crate, binary, image, mode, method or config key carries "Jev", "TypeSafe" or "System One". Wire-required identifiers are exempt (ADR-031).
@@ -1102,7 +1102,7 @@ States over 64 KB may be tokenised in parallel at pre-tokenizer-safe split point
 **Decision.**
 
 *Reference environment* (`tools/goldens`, uv lockfile):
-- laya 0.3.7 (NandhaKishorM/laya commit `010bacef`);
+- laya 0.3.7 (NandhaKishorM/laya commit `010bacef` = tag `v0.3.7`), installed **from git by commit**: 0.3.7 and 0.3.8 were removed from PyPI by 2026-09-24, when upstream was at 0.3.20, 173 commits past the pin, including changes to `common.py` (`build_sequence` gained `state_ids`, noul gained `labels`) (VERIFIED, AM-17). The parity target stays 0.3.7; moving it is a separate decision with regenerated goldens;
 - torch 2.14.0, transformers 5.17.0, tokenizers 0.23.2, numpy 2.4.6;
 - **CPython 3.11**, with Unicode 14.0.0 tables. The design phase VERIFIED the reference venv: Python 3.11.15, `unicodedata` 14.0.0.
 
@@ -2215,7 +2215,7 @@ Calibration is **always reported three ways**: raw (T = 1), shipped, and held-ou
 
 ### ADR-030: Licensing, third-party code and supply chain
 
-**Status:** Accepted. The licence choice (Q2) and counsel items (Q8, Q13) remain open. **Area:** A9.
+**Status:** Accepted. Q2 answered 2026-09-24: Apache-2.0 only. Counsel items (Q8, Q13) remain open. **Area:** A9.
 
 **Context.**
 - We vendor BSD-3 code (FA2, CUTLASS).
@@ -2423,7 +2423,7 @@ Week 2:
 | R8 | The modelled 4090 numbers are wrong | M / M | M0 spikes; gates re-based and recorded | M0 |
 | R9 | FP8 per-token/per-channel scaling unavailable in cuBLASLt on Ada | **H / L** | CUTLASS sm89 is the plan, not a fallback; FP8 is post-1.0 anyway | M0 probe |
 | R10 | Jev contract drift (young SDKs, no changelog) | M / L | Pinned SDK conformance + Renovate | A red conformance test |
-| R11 | Laya reference or Hub drift | M / L | Pins + sha256; compat targets 0.3.7; weekly regeneration | Nightly L3 |
+| R11 | Laya reference or Hub drift | H / L | Pins + sha256; compat targets 0.3.7, installed from git by commit (0.3.7 left PyPI on 2026-09-24, AM-17); weekly regeneration | Nightly L3 |
 | R12 | One 4090 is dev machine, CI runner and trainer at once | H / M | The GPU-night schedule; CPU CI covers PRs | Queue conflicts |
 | R13 | Calibration does not transfer out of distribution | M / M | Feature-conditioned T, correctness head, conformal; the OOD-S dev gate | G-Q3 on dev |
 | R14 | Option budgets overflow (255 options × spans) | M / M | Option-group chunking + random chunking in training; the chunk-invariance gate | X6 |
@@ -2540,7 +2540,7 @@ Week 2:
 
 ## 10. Appendix C: amendments from the documentation review
 
-The documentation consistency review of 2026-09-23 checked this record against ARCHITECTURE.md, ROADMAP.md, TRAINING.md, the README and the primary sources. It made these changes in place; the IDs AM-1…AM-15 are local to this appendix (AM-14 was added when ANALYSIS.md joined the documentation). The ADR files split into `docs/adr/` in M0 carry them.
+The documentation consistency review of 2026-09-23 checked this record against ARCHITECTURE.md, ROADMAP.md, TRAINING.md, the README and the primary sources. It made these changes in place; the IDs AM-1…AM-17 are local to this appendix (AM-14 was added when ANALYSIS.md joined the documentation). The ADR files split into `docs/adr/` in M0 carry them.
 
 | # | Where | Change | Reason |
 |---|---|---|---|
@@ -2557,5 +2557,7 @@ The documentation consistency review of 2026-09-23 checked this record against A
 | AM-11 | ADR-007 | No dev-h budget exists for `arbitro-ort`; the M0 exit estimates it if the spike fails | Found by ROADMAP.md |
 | AM-12 | ADR-019, ADR-021, ADR-023 | Type tokens are inserted by id and marked special; shipped calibration artefacts are fitted only on training-licensed items; the loss floor's gradient is settled before M3b | Found by TRAINING.md (§4.4, §10.4, §9.1) |
 | AM-13 | Header, Appendix B | Paths into the design environment replaced with upstream repository names; "judge panels" renamed "review panels" | The record is now part of the repository |
+| AM-17 | ADR-012 reference environment; R11 | laya 0.3.7 is installed from git at `010bacef` because PyPI no longer serves it; R11 likelihood raised to H | PyPI JSON for `laya` on 2026-09-24 lists no 0.3.7/0.3.8; upstream HEAD is 173 commits past `010bacef` (git log) |
+| AM-16 | §2 Q1/Q2, §3 names, ADR-002, ADR-030; README, ROADMAP | Q1 answered (Arbitro) and Q2 answered (Apache-2.0 only); ADR-002 accepted; LICENSE added | Maintainer decision, 2026-09-24 |
 | AM-15 | ADR-016 `round2`; ARCHITECTURE.md §12 rounding row; §5.2 MEM1/MEM2 note | `round2` guarantees only the invariants seen in all logs; `choice` follows the unrounded argmax; the exact Jev rounding rule is marked unknown. MEM1/MEM2 count state-dict elements, which include the 3-element `temperature` buffer | ANALYSIS.md fact-check recomputed the DMB raw log (52 multi-entry artefacts; one 0.14-over-0.15 choice); `sum(p.numel() for p in model.parameters())` = 421,293,827 / 321,908,995 in torch 2.14 |
 | AM-14 | Header, §3.6, Appendix B | ANALYSIS.md, the reference analysis of Jev and Laya, is listed as a companion document and in the repository layout | Written after the review; it quotes §5 values unchanged and is linked from the README and the companion documents |

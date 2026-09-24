@@ -1,0 +1,12 @@
+# Python environments and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+# Rust
+target/
+# Never commit weights or downloaded checkpoints
+*.safetensors
+*.bin
+*.onnx

@@ -1,0 +1,19 @@
+[project]
+name = "arbitro-goldens"
+version = "0.0.1"
+description = "Pinned Laya reference environment (ADR-012): checkpoint pins, PyTorch baseline, golden fixtures."
+license = "Apache-2.0"
+requires-python = "==3.11.*"
+dependencies = [
+    # laya 0.3.7 was removed from PyPI on 2026-09-24; pin the reference by git commit (= tag v0.3.7).
+    "laya @ git+https://github.com/NandhaKishorM/laya@010bacef009c855ccba814b51f7c8e1d38ab5e3f",
+    "torch==2.14.0",
+    "transformers==5.17.0",
+    "tokenizers==0.23.2",
+    "numpy==2.4.6",
+    "safetensors>=0.6",
+    "huggingface_hub>=1.0",
+]
+
+[tool.uv]
+package = false

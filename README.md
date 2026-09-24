@@ -8,7 +8,7 @@
 
 > **Status: design phase.** No code exists yet, and every feature below is *planned*. Each number is labelled as a target (GATE/GOAL), an estimate (ESTIMATED), a third-party claim (REPORTED), or a figure checked against source code or raw data during the design phase (VERIFIED). Nothing has been measured by this project. v0.1 is planned for about week 14 of development (ESTIMATED at ~12 h/week; see the [roadmap](docs/ROADMAP.md)).
 
-"Arbitro" is a working name (open question Q1). The repository is `Foxur/Rustify`.
+The project name is **Arbitro** (decided 2026-09-24, Q1). The repository is `Foxur/Rustify` for now.
 
 ## Why
 
@@ -246,6 +246,6 @@ Pull-request CI is CPU-only and needs no model weights. GPU tests run nightly on
 
 ## License
 
-- **Apache-2.0** for all code, documentation and our own model weights. This follows the decision record's default; Q2 (Apache-2.0 only vs MIT OR Apache-2.0) is still open.
+- **Apache-2.0** ([LICENSE](LICENSE)) for all code, documentation and our own model weights (decided 2026-09-24, Q2: Apache-2.0 only, not dual-licensed).
 - `arbitro-cuda` will be `Apache-2.0 AND BSD-3-Clause`, because it vendors FlashAttention-2 and CUTLASS kernels. `third_party/` will record their file-level provenance, and `NOTICE` will list copied code and the Laya-derived logic files (a behavioural port of Laya, © Convai Innovations, Apache-2.0).
 - Third-party model weights keep their own licences.

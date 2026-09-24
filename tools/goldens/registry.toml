@@ -1,0 +1,25 @@
+# Pinned Laya checkpoints (docs/DECISIONS.md ADR-005). Weights are never committed or mirrored;
+# fetch_checkpoints.py downloads them from the original repositories into $ARBITRO_HOME and
+# records per-file sha256 in pins.lock.json.
+
+[laya-en]
+repo = "convaiinnovations/laya"
+revision = "c5d78730f3493e4fe16d61507ef4b78eef7318cf"
+subfolder = ""
+
+[laya-multilingual]
+repo = "convaiinnovations/laya"
+revision = "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+subfolder = "multilingual"
+
+[laya-typed-decisions]
+repo = "convaiinnovations/laya-typed-decisions"
+revision = "f9ab0b228f0fc0f14d873dbc99038f135c2da1b2"
+subfolder = ""
+
+# Comparison only (settles CR §3 #9: is the EN root identical at both pins?).
+[laya-en-at-1c5edc17]
+repo = "convaiinnovations/laya"
+revision = "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+subfolder = ""
+compare_only = true

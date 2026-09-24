@@ -5,7 +5,7 @@
 | Status | Design baseline, 2026-09-23. Nothing here is implemented or MEASURED yet. |
 | Applies to | v0.1 "drop-in" → 1.0 "API freeze" (ADR-032) |
 | Normative sources | The decision record [DECISIONS.md](DECISIONS.md) (ADR-001 … ADR-033, split into `docs/adr/` in M0). Where this document and an ADR disagree, the ADR wins. The errata this document found (O-20) are corrected there (DECISIONS.md Appendix C). |
-| Name | "Arbitro" is the working name (Q1). The repository stays `Foxur/Rustify`. A rename is a mechanical token replacement (`arbitro` → `<name>`, `x_arbitro` → `x_<name>`). |
+| Name | **Arbitro** (decided 2026-09-24, Q1). The repository stays `Foxur/Rustify` for now. A rename is a mechanical token replacement (`arbitro` → `<name>`, `x_arbitro` → `x_<name>`). |
 
 This document explains how the pieces fit together: crates, types, the path of one request, the numerics of every backend, the scheduler, the HTTP layer, calibration, determinism, performance targets and the test strategy. It does not repeat the rationale of the ADRs; it links to them. What Jev and Laya are, and how Laya's reference implementation computes an answer, is in [ANALYSIS.md](ANALYSIS.md).
 
