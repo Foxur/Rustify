@@ -1,0 +1,41 @@
+[source]
+id = "goemotions"
+family = "emotion"
+pool = "T"
+homepage = "https://github.com/google-research/google-research/tree/master/goemotions"
+
+[licence]
+spdx = "Apache-2.0"
+status = "reported"            # the goemotions README states no data licence; the google-research repository is Apache-2.0 (repository LICENSE). Check the dataset card before signing.
+evidence = "https://github.com/google-research/google-research/blob/d36068b845da4c2b24927fee2cea1e6ef98dadda/LICENSE"
+verified_by = ""
+verified_on = ""
+attribution = "GoEmotions: Demszky et al., ACL 2020, Google Research"
+allowed_use = ["train", "eval"]
+
+[[files]]
+name = "train.tsv"
+url = "https://raw.githubusercontent.com/google-research/google-research/d36068b845da4c2b24927fee2cea1e6ef98dadda/goemotions/data/train.tsv"
+revision = "d36068b845da4c2b24927fee2cea1e6ef98dadda"
+sha256 = "1c254a142be5c00e80d819b9ae1bbd36d94b2eeb8f4b1271846508d57e57d9c5"
+
+[[files]]
+name = "dev.tsv"
+url = "https://raw.githubusercontent.com/google-research/google-research/d36068b845da4c2b24927fee2cea1e6ef98dadda/goemotions/data/dev.tsv"
+revision = "d36068b845da4c2b24927fee2cea1e6ef98dadda"
+sha256 = "575489c079c9de1097062a01738f998590d6b7ead66dd1c9fd1d2ba01fd8bc62"
+
+[[files]]
+name = "emotions.txt"
+url = "https://raw.githubusercontent.com/google-research/google-research/d36068b845da4c2b24927fee2cea1e6ef98dadda/goemotions/data/emotions.txt"
+revision = "d36068b845da4c2b24927fee2cea1e6ef98dadda"
+sha256 = "45c3ef86782d2a4d7fedcd6d8c111aa0d0e94720689bd164fac94fefb4495a89"
+
+[split]
+policy = "upstream"
+
+[convert]
+converter = "goemotions@1"
+qtypes = ["choice", "noul"]
+options = { sample = [5, 12] }
+gold_quality = "noisy"         # crowd labels, 28 classes

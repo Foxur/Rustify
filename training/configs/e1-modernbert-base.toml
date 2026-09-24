@@ -1,0 +1,42 @@
+# E1 arm: ModernBERT-base (Apache-2.0), layout L0, hybrid read-out (docs/TRAINING.md §5.3).
+# ~50M tokens ≈ 12-20 min on an RTX 4090 (about 2.4x cheaper per token than -large).
+
+[model]
+backbone = "modernbert-base"
+hf_repo = "answerdotai/ModernBERT-base"
+revision = ""                 # pin the Hub commit once it is recorded
+tokenizer = "answerdotai/ModernBERT-base"
+head_layers = 2
+dropout = 0.1
+readout = "hybrid"
+max_len = 512
+head_max_len = 192
+
+[data]
+train = ["clinc150", "goemotions", "paws"]
+eval_in = ["clinc150:dev", "goemotions:dev", "paws:dev"]
+eval_ood = ["massive-en:dev", "anli:dev"]
+tau = 0.4
+eval_limit = 3000
+
+[train]
+total_tokens = 50_000_000
+token_budget = 16384          # base fits more tokens per micro-batch
+max_segments = 512
+k_max = 21
+grad_accum = 4                # ~49k tokens per optimizer step
+lr_encoder = 2e-5
+lr_head = 3e-4
+llrd = 0.9
+warmup_frac = 0.06
+weight_decay = 0.01
+betas = [0.9, 0.98]
+eps = 1e-6
+clip = 1.0
+w_sph = 0.5
+w_rps = 1.0
+compile = true
+seed = 1
+num_workers = 4
+eval_every_tokens = 5_000_000
+log_every_steps = 10

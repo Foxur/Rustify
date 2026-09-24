@@ -1,0 +1,30 @@
+# E1 manifest (docs/TRAINING.md §11.3). Licence status stays "reported" until the maintainer signs the checklist.
+[source]
+id = "clinc150"
+family = "intents"
+pool = "T"
+homepage = "https://github.com/clinc/oos-eval"
+
+[licence]
+spdx = "CC-BY-3.0"
+status = "reported"            # LICENSE at the pinned commit read 2026-09-24: Creative Commons Attribution 3.0 Unported
+evidence = "https://github.com/clinc/oos-eval/blob/828f8093932c8fe6ca7936c3d2e52903b1c523de/LICENSE"
+verified_by = ""
+verified_on = ""
+attribution = "CLINC150: Larson et al., An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction (EMNLP 2019), CC BY 3.0"
+allowed_use = ["train", "eval"]
+
+[[files]]
+name = "data_full.json"
+url = "https://raw.githubusercontent.com/clinc/oos-eval/828f8093932c8fe6ca7936c3d2e52903b1c523de/data/data_full.json"
+revision = "828f8093932c8fe6ca7936c3d2e52903b1c523de"
+sha256 = "36923c3705a59e08fe9c3883d8bc2dd966ef93e22cb78ac41171782a698d56e0"
+
+[split]
+policy = "upstream"            # train/val/test and oos_train/oos_val/oos_test
+
+[convert]
+converter = "clinc150@1"
+qtypes = ["choice"]
+options = { sample = [5, 20], none_from = "oos" }
+gold_quality = "clean"

@@ -10,3 +10,6 @@ target/
 *.safetensors
 *.bin
 *.onnx
+
+# Training runs (checkpoints, optimizer state); summaries go to reports/
+runs/

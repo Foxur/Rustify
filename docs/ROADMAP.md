@@ -184,6 +184,8 @@ Each milestone lists its goal, deliverables, exit gate, effort, the decisions it
 - Arms, layout L0, hybrid read-out, warmup 6 %, LLRD 0.9, one seed each at ~100M tokens (a second seed for ModernBERT-large): ModernBERT-large; ModernBERT-base; Ettin-encoder-400m only if its weight licence checks out (UNVERIFIED; its code repo is MIT, VERIFIED); DeBERTa-v3-large padded to 512 as the reference arm.
 - Layout L0 vs layout L2 on ModernBERT-base.
 
+**Status (2026-09-24).** The spike trainer exists and is CPU-tested (`training/e1.sh`, `training/arbitro_train/train.py`, manifests in `data/manifests/`): layout L0, hybrid read-out, ModernBERT-large and -base arms. Pulled forward so the GPU can answer R2 while the Rust compat work starts. Not yet built: the DeBERTa-v3-large reference arm and layout L2. HellaSwag is not in the first mixture (its GitHub source was unreachable on 2026-09-24).
+
 **Exit gate.** Learning curves on OOD-S dev; the signal recorded in `ADR-020a`. E1 informs, it does not decide: the backbone rule is applied in X1 (M5).
 
 **Effort.** 18 dev-h (counted in the cumulative total), 10–15 GPU-h (line #2).

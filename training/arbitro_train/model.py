@@ -255,37 +255,51 @@ class HeadLayer(nn.Module):
 class DecisionHead(nn.Module):
     """Adds type_emb[qtype] to every token, runs ``head_layers`` packed layers, scores markers.
 
-    Returns fp32 logits for the marker rows; the last scorer projection runs in fp32
-    (docs/TRAINING.md §7.3)."""
+    ``readout="hybrid"`` adds the mean of each option's text tokens to its marker state (the E1
+    setup, docs/TRAINING.md §4.5); ``"marker"`` is Laya's read-out. Returns fp32 logits for the
+    marker rows; the last scorer projection runs in fp32 (docs/TRAINING.md §7.3)."""
 
-    def __init__(self, d: int, head_layers: int = 2, dropout: float = 0.1):
+    def __init__(self, d: int, head_layers: int = 2, dropout: float = 0.1, readout: str = "marker"):
         super().__init__()
+        if readout not in ("marker", "hybrid"):
+            raise ValueError(f"unknown readout {readout!r}")
+        self.readout = readout
         self.type_emb = nn.Embedding(3, d)
         self.layers = nn.ModuleList(HeadLayer(d, dropout) for _ in range(head_layers))
         self.scorer_norm = nn.LayerNorm(d)
         self.scorer_fc = nn.Linear(d, d)
         self.scorer_out = nn.Linear(d, 1)
 
-    def forward(self, h, token_qtype, cu_seqlens, max_seqlen, marker_rows, attn_impl: AttnImpl = "auto"):
+    def forward(self, h, token_qtype, cu_seqlens, max_seqlen, marker_rows, attn_impl: AttnImpl = "auto",
+                span_rows=None, span_owner=None):
         x = h + self.type_emb(token_qtype).to(h.dtype)
         mask_cache: dict = {}
         for layer in self.layers:
             x = layer(x, cu_seqlens, max_seqlen, attn_impl, mask_cache)
         m = x.index_select(0, marker_rows)
+        if self.readout == "hybrid":
+            if span_rows is None:
+                raise ValueError("hybrid read-out needs span_rows/span_owner in the batch")
+            n = marker_rows.shape[0]
+            rows = x.index_select(0, span_rows).float()
+            sums = rows.new_zeros(n + 1, rows.shape[1]).index_add_(0, span_owner, rows)
+            cnt = rows.new_zeros(n + 1).index_add_(0, span_owner, torch.ones_like(span_owner, dtype=rows.dtype))
+            m = m + (sums[:n] / cnt[:n].clamp_min(1.0)[:, None]).to(m.dtype)
         m = F.gelu(self.scorer_fc(self.scorer_norm(m)))
         with torch.autocast(device_type=m.device.type, enabled=False):
             return F.linear(m.float(), self.scorer_out.weight.float(), self.scorer_out.bias.float()).squeeze(-1)
 
 
 class DecisionModel(nn.Module):
-    def __init__(self, cfg: EncoderConfig, head_layers: int = 2, dropout: float = 0.1):
+    def __init__(self, cfg: EncoderConfig, head_layers: int = 2, dropout: float = 0.1, readout: str = "marker"):
         super().__init__()
         self.encoder = PackedModernBert(cfg)
-        self.head = DecisionHead(cfg.hidden_size, head_layers, dropout)
+        self.head = DecisionHead(cfg.hidden_size, head_layers, dropout, readout)
 
     def forward(self, batch: dict, attn_impl: AttnImpl = "auto") -> torch.Tensor:
         h = self.encoder(batch["input_ids"], batch["position_ids"], batch["cu_seqlens"], batch["max_seqlen"], attn_impl)
-        return self.head(h, batch["token_qtype"], batch["cu_seqlens"], batch["max_seqlen"], batch["marker_rows"], attn_impl)
+        return self.head(h, batch["token_qtype"], batch["cu_seqlens"], batch["max_seqlen"], batch["marker_rows"], attn_impl,
+                         batch.get("span_rows"), batch.get("span_owner"))
 
 
 # --------------------------------------------------------------------------------------------

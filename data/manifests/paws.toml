@@ -1,0 +1,28 @@
+[source]
+id = "paws"
+family = "paraphrase"
+pool = "T"
+homepage = "https://github.com/google-research-datasets/paws"
+
+[licence]
+spdx = "LicenseRef-PAWS"       # "The dataset may be freely used for any purpose ..." (LICENSE at the pinned commit)
+status = "reported"
+evidence = "https://github.com/google-research-datasets/paws/blob/02b29f3af1143620d1b7f352247e65c0bdd2ec18/LICENSE"
+verified_by = ""
+verified_on = ""
+attribution = "PAWS: Zhang, Baldridge and He, NAACL 2019; data source Google LLC"
+allowed_use = ["train", "eval"]
+
+[[files]]
+name = "paws_wiki_labeled_final.tar.gz"
+url = "https://storage.googleapis.com/paws/english/paws_wiki_labeled_final.tar.gz"
+revision = "gcs"
+sha256 = ""                    # trust-on-first-use: recorded in data.lock.json by the first fetch
+
+[split]
+policy = "upstream"            # final/train.tsv, dev.tsv, test.tsv
+
+[convert]
+converter = "paws@1"
+qtypes = ["noul"]
+gold_quality = "clean"

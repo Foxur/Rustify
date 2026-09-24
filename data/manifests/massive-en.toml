@@ -1,0 +1,28 @@
+[source]
+id = "massive-en"
+family = "intents"
+pool = "O"                     # OOD-S: evaluation only; all of MASSIVE is on the training exclusion list (ADR-024)
+homepage = "https://github.com/alexa/massive"
+
+[licence]
+spdx = "CC-BY-4.0"
+status = "reported"            # 1.1/LICENSE inside the tarball: Attribution 4.0 International
+evidence = "amazon-massive-dataset-1.1.tar.gz:1.1/LICENSE"
+verified_by = ""
+verified_on = ""
+attribution = "MASSIVE: FitzGerald et al., 2022, Amazon, CC BY 4.0"
+allowed_use = ["eval"]
+
+[[files]]
+name = "amazon-massive-dataset-1.1.tar.gz"
+url = "https://amazon-massive-nlu-dataset.s3.amazonaws.com/amazon-massive-dataset-1.1.tar.gz"
+revision = "1.1"
+sha256 = "4cba5faa11c71437928e17cb1b9b3d8b8e727e7ea363a3a9a8045e19c0491577"
+
+[split]
+policy = "upstream"            # partition = dev is the OOD-S dev set; test is read once per release
+
+[convert]
+converter = "massive@1"
+qtypes = ["choice"]
+options = { sample = [20, 20], seed = 13 }   # 20 options incl. gold, fixed seed (Laya protocol)

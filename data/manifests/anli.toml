@@ -1,0 +1,27 @@
+[source]
+id = "anli"
+family = "nli"
+pool = "O"                     # OOD-S: evaluation only (NC licence)
+homepage = "https://github.com/facebookresearch/anli"
+
+[licence]
+spdx = "CC-BY-NC-4.0"
+status = "reported"
+evidence = "https://github.com/facebookresearch/anli (README: CC BY-NC 4.0)"
+verified_by = ""
+verified_on = ""
+attribution = "ANLI: Nie et al., ACL 2020"
+allowed_use = ["eval"]
+
+[[files]]
+name = "anli_v1.0.zip"
+url = "https://dl.fbaipublicfiles.com/anli/anli_v1.0.zip"
+revision = "v1.0"
+sha256 = ""                    # trust-on-first-use
+
+[split]
+policy = "upstream"            # R1-R3 dev.jsonl as OOD-S dev
+
+[convert]
+converter = "anli@1"
+qtypes = ["choice"]

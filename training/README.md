@@ -15,6 +15,8 @@ measurements on the RTX 4090 ([ROADMAP §6](../docs/ROADMAP.md#6-the-first-two-w
 | `arbitro_train/bench/gemm.py` | W1.3: GEMM TFLOP/s (bf16, fp16/fp32-acc, bf16→fp32 out, FP8, INT8) and windowed varlen FA2 |
 | `arbitro_train/bench/train_throughput.py` | N1: full training steps, packed vs padded, gate C1 (≥ 20k useful tok/s, ModernBERT-large, L = 512) |
 | `m0_gpu.sh` | Runs all of the above plus the Laya reference (`tools/goldens/`) with one log |
+| `arbitro_train/data/` | E1 sources (fetch + convert, manifests in `data/manifests/`) and the question/sequence/packing pipeline |
+| `arbitro_train/train.py`, `configs/e1-*.toml`, `e1.sh` | The E1 spike trainer and its runner; `report_e1.py` summarises runs |
 | `tests/` | CPU tests (`uv run pytest`) |
 
 Verified in the design environment (CPU, torch 2.14.0, transformers 5.17.0): the packed encoder matches
@@ -31,10 +33,27 @@ NVIDIA driver ≥ 580 (the PyPI torch 2.14 wheels are CUDA 13), [`uv`](https://d
 ~20 GB free disk (Python environments ≈ 12 GB, Laya checkpoints 2.3 GB, ModernBERT-base 0.6 GB),
 Hugging Face reachable. No account or token is needed for these public repositories.
 
+**Windows machine → WSL2 with Ubuntu 24.04** (native Windows is not supported: no varlen FlashAttention
+and no Triton for `torch.compile`):
+
+```powershell
+wsl --install -d Ubuntu-24.04     # PowerShell as administrator; then: wsl --update
+```
+
+Install the NVIDIA driver (≥ 580) on **Windows only**; inside WSL there is no Linux driver and no CUDA
+toolkit (the torch wheels bring the CUDA runtime). Give WSL enough memory in `%UserProfile%\.wslconfig`
+(`[wsl2]`, `memory=48GB`, `swap=16GB`, then `wsl --shutdown`). The GPU power limit can only be changed
+with the Windows `nvidia-smi`. Keep the repository and data inside the Linux file system (`~/`), never
+under `/mnt/c` (much slower I/O).
+
 ```sh
+sudo apt update && sudo apt install -y build-essential git curl   # Triton needs gcc
+curl -LsSf https://astral.sh/uv/install.sh | sh && exec $SHELL
+nvidia-smi                                                       # must show the RTX 4090
 git clone https://github.com/Foxur/Rustify && cd Rustify
 git checkout claude/jev-layla-rust-2fs3dh
 ./training/m0_gpu.sh          # ~1–1.5 h, mostly unattended; stops early if a check fails
+./training/e1.sh              # then the first real training run (below)
 ```
 
 Or step by step (each writes `reports/spikes/<kind>-<host>-<stamp>.{json,md}`):
@@ -66,10 +85,33 @@ git push
 - OOM on `T16384` or `padded-hf` arms is a result, not a bug: it is recorded in the table.
 - Self-test FAIL: stop and send `reports/spikes/selftest-*.json` and the log; the throughput numbers would be meaningless.
 
-## What comes next (E1)
+## E1: the first real training run
 
-Once C1 is measured, the first real training run is **E1, the early backbone signal**
-([TRAINING.md §5.3](../docs/TRAINING.md#53-e1-the-early-signal-weeks-511)): ModernBERT-large vs
-ModernBERT-base vs DeBERTa-v3-large on a licence-clean, gold-only mini-mixture (≈ 100–200k decisions
-from CLINC150, PAWS, HellaSwag and GoEmotions, each with a manifest), ≈ 10–15 GPU-h. It answers the
-largest model risk first: whether ModernBERT-large learns from a cold start (R2).
+After `m0_gpu.sh` passed its self-test, run the early backbone signal
+([TRAINING.md §5.3](../docs/TRAINING.md#53-e1-the-early-signal-weeks-511)):
+
+```sh
+./training/e1.sh            # data, then ModernBERT-base (~15-20 min) and ModernBERT-large (~35-45 min)
+./training/e1.sh large      # one arm only
+```
+
+| Step | What happens |
+|---|---|
+| Data | `python -m arbitro_train.data.sources` downloads the sources named in `data/manifests/*.toml` (pinned commits, sha256-checked; PAWS and ANLI are recorded trust-on-first-use in `data/data.lock.json`) and converts them to `$ARBITRO_HOME/data/e1/` (default `~/.cache/arbitro`) |
+| Training mixture (gold only, no teachers) | CLINC150 (intent choice over 5-20 sampled intents, out-of-scope → "none of the listed options"), GoEmotions (emotion choice or noul), PAWS (paraphrase noul, 30 % negated with flipped label); mixed by p ∝ n^0.4 |
+| Evaluation | In-domain dev (CLINC150, GoEmotions, PAWS) and OOD-S dev: MASSIVE-en dev (20 options, fixed seed 13) and ANLI dev (evaluation only, CC BY-NC) |
+| Model | Pretrained encoder from the Hub (`answerdotai/ModernBERT-*`, Apache-2.0) + 2-layer decision head, layout L0 (Laya's sequence layout, token-identical to `laya.common.build_sequence`, tested), hybrid read-out |
+| Optimisation | bf16 autocast, fp32 master weights, fused AdamW (0.9, 0.98), LR 2e-5 encoder / 3e-4 head, layer-wise decay 0.9, 6 % warmup + cosine, 50M tokens, analytic proper-score loss |
+| Output | `runs/<stamp>-<config>-s<seed>/` (metrics.jsonl, last.pt for `--resume`, best/model.safetensors; git-ignored) and `reports/e1/e1-<host>-<stamp>.md` (commit this) |
+
+A run can be continued after an interruption with
+`uv run python -m arbitro_train.train --resume runs/<run>` (it restarts at the beginning of the current data epoch).
+Overrides work without editing files, e.g. `--set train.token_budget=8192 --set train.total_tokens=20000000`.
+
+The E1 numbers are **signals, not model results**: an arm "learns" when its OOD-S dev accuracy has a 95 % CI lower
+bound above chance. The question E1 answers first is risk R2: does ModernBERT-large learn from a cold start at all?
+The DeBERTa-v3-large reference arm and the layout-L2 arm follow once these two arms have run.
+
+Licences: every source manifest is `status = "reported"` until you sign the checklist in it (`verified_by`,
+`verified_on`); the trainer prints a warning for each. E1 is a signal run; nothing trained here is released.
+HellaSwag is not in this first mixture: its GitHub source (`rowanz/hellaswag`) was not reachable on 2026-09-24.

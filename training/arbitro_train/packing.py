@@ -120,10 +120,13 @@ def synthetic_batch(spec: PackSpec, vocab_size: int, mask_token_id: int, seed: i
 
 
 def to_device(batch: dict, device: torch.device | str) -> dict:
+    """numpy arrays and tensors (a DataLoader converts arrays to tensors) go to ``device``."""
     out = {}
     for k, v in batch.items():
         if isinstance(v, np.ndarray):
             out[k] = torch.from_numpy(v).to(device, non_blocking=True)
+        elif isinstance(v, torch.Tensor):
+            out[k] = v.to(device, non_blocking=True)
         else:
             out[k] = v
     return out
@@ -188,4 +191,97 @@ def batch_from_sequences(seqs: list[list[int]], markers: list[list[int]], qtypes
         "real_tokens": used,
         "real_sequences": len(seqs),
         "real_markers": len(marker_rows),
+    }
+
+
+@dataclass(frozen=True)
+class StaticShape:
+    """Fixed tensor shapes of a real-data micro-batch (so torch.compile never recompiles)."""
+
+    token_budget: int = 12288
+    max_segments: int = 512
+    k_max: int = 21
+    max_seqlen: int = 512
+    span_max: int = 6144
+
+
+def tail_segments(tail_tokens: int, max_seqlen: int) -> int:
+    return -(-tail_tokens // max_seqlen)
+
+
+def fits(n_items: int, used_tokens: int, shape: StaticShape) -> bool:
+    """Whether n_items sequences with used_tokens tokens (plus their dummy tail) fit the shape."""
+    return used_tokens <= shape.token_budget and \
+        n_items + tail_segments(shape.token_budget - used_tokens, shape.max_seqlen) <= shape.max_segments
+
+
+def pack_items(items: list[dict], shape: StaticShape) -> dict:
+    """Pack realized questions into one static-shape micro-batch.
+
+    Each item: {"ids": [int], "markers": [int], "spans": [(start, end)] (per option, end exclusive),
+    "qtype": int, "target": [float] (per option), "gold": int, "src": int, "weight": float}.
+    The caller guarantees sum(len(ids)) <= token_budget and len(items) < max_segments."""
+    t, n_seg, k_max = shape.token_budget, shape.max_segments, shape.k_max
+    used = sum(len(it["ids"]) for it in items)
+    if used > t or len(items) + tail_segments(t - used, shape.max_seqlen) > n_seg:
+        raise ValueError("items exceed the static shape")
+    input_ids = np.zeros(t, dtype=np.int64)
+    position_ids = np.zeros(t, dtype=np.int64)
+    token_qtype = np.zeros(t, dtype=np.int64)
+    m_max = n_seg * k_max
+    marker_rows = np.zeros(m_max, dtype=np.int64)
+    marker_index = np.zeros((n_seg, k_max), dtype=np.int64)
+    marker_mask = np.zeros((n_seg, k_max), dtype=bool)
+    targets = np.zeros((n_seg, k_max), dtype=np.float32)
+    qtype = np.zeros(n_seg, dtype=np.int64)
+    loss_weight = np.zeros(n_seg, dtype=np.float32)
+    gold = np.full(n_seg, -1, dtype=np.int64)
+    src = np.full(n_seg, -1, dtype=np.int64)
+    span_rows = np.zeros(shape.span_max, dtype=np.int64)
+    span_owner = np.full(shape.span_max, m_max, dtype=np.int64)  # m_max = dummy slot
+    cu = [0]
+    start = n_m = n_s = 0
+    for s, it in enumerate(items):
+        ids = it["ids"]
+        n = len(ids)
+        input_ids[start:start + n] = ids
+        position_ids[start:start + n] = np.arange(n)
+        token_qtype[start:start + n] = it["qtype"]
+        k = len(it["markers"])
+        if k > k_max:
+            raise ValueError(f"{k} options exceed k_max={k_max}")
+        for j, p in enumerate(it["markers"]):
+            marker_index[s, j] = n_m
+            marker_rows[n_m] = start + p
+            for r in range(it["spans"][j][0], it["spans"][j][1]) if it.get("spans") else ():
+                if n_s < shape.span_max:
+                    span_rows[n_s] = start + r
+                    span_owner[n_s] = n_m
+                    n_s += 1
+            n_m += 1
+        marker_mask[s, :k] = True
+        targets[s, :k] = it["target"][:k]
+        qtype[s] = it["qtype"]
+        loss_weight[s] = it.get("weight", 1.0)
+        gold[s] = it.get("gold", -1)
+        src[s] = it.get("src", -1)
+        start += n
+        cu.append(start)
+    # The dummy tail is split into chunks of <= max_seqlen: FlashAttention only computes rows up
+    # to max_seqlen per segment, and uncomputed (possibly NaN) rows would poison the weight
+    # gradients even though their own gradient is zero (NaN * 0 = NaN).
+    while start < t:
+        n = min(shape.max_seqlen, t - start)
+        position_ids[start:start + n] = np.arange(n)
+        start += n
+        cu.append(start)
+    while len(cu) < n_seg + 1:
+        cu.append(t)
+    return {
+        "input_ids": input_ids, "position_ids": position_ids, "token_qtype": token_qtype,
+        "cu_seqlens": np.asarray(cu, dtype=np.int32), "max_seqlen": int(shape.max_seqlen),
+        "marker_rows": marker_rows, "marker_index": marker_index, "marker_mask": marker_mask,
+        "targets": targets, "qtype": qtype, "loss_weight": loss_weight, "gold": gold, "src": src,
+        "span_rows": span_rows, "span_owner": span_owner,
+        "real_tokens": int(used), "real_sequences": len(items), "real_markers": int(n_m),
     }
